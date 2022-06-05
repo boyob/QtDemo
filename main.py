@@ -26,7 +26,7 @@ class MyWindow(QtWidgets.QWidget, MainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     splash = QtWidgets.QSplashScreen(QtGui.QPixmap(r'assets\icons\splash.png'))
-    splash.showMessage("正在启动 IE Automation Kit...", QtCore.Qt.AlignmentFlag.AlignCenter, QtGui.QColor(0, 0, 0))
+    splash.showMessage("正在启动 QtDemo...", QtCore.Qt.AlignmentFlag.AlignCenter, QtGui.QColor(0, 0, 0))
     splash.show()
     time.sleep(3)
     QtWidgets.qApp.processEvents()
