@@ -24,7 +24,7 @@ class MainWindow(object):
         # 设置主窗口。
         self.main_window = main_window
         self.main_window.setMinimumSize(1280, 720)
-        self.main_window.resize(1400, 790)
+        # self.main_window.resize(1400, 790)
         self.main_window.setWindowTitle('IE Automation Kit')
         self.main_window.setWindowIcon(QtGui.QIcon(r'assets\icons\title.png'))
         self.main_window.setStyleSheet('background-color: #2A2A2A')
@@ -38,15 +38,19 @@ class MainWindow(object):
         self.menu_1.setText('图卡支架')
         self.menu_1.setPixmap(r'assets\icons\card_holder.png')
         self.menu_1.folder_button.clicked.connect(lambda: self.controller.select_dir(1))
+        self.menu_1.switch_button.clicked.connect(lambda: self.controller.switch_camera(1))
         self.menu_2.setText('实景灯箱')
         self.menu_2.setPixmap(r'assets\icons\light_box.png')
         self.menu_2.folder_button.clicked.connect(lambda: self.controller.select_dir(2))
+        self.menu_2.switch_button.clicked.connect(lambda: self.controller.switch_camera(2))
         self.menu_3.setText('机械臂')
         self.menu_3.setPixmap(r'assets\icons\arm.png')
         self.menu_3.folder_button.clicked.connect(lambda: self.controller.select_dir(3))
+        self.menu_3.switch_button.clicked.connect(lambda: self.controller.switch_camera(3))
         self.menu_4.setText('系统设置')
         self.menu_4.setPixmap(r'assets\icons\title.png')
         self.menu_4.folder_button.clicked.connect(lambda: self.controller.select_dir(4))
+        self.menu_4.switch_button.clicked.connect(lambda: self.controller.switch_camera(4))
         self.menus_layout = QtWidgets.QHBoxLayout(self.menus_widget)
         self.menus_layout.setContentsMargins(self.menu_margin, self.menu_margin, self.menu_margin, self.menu_margin)
         self.menus_layout.setSpacing(self.menu_margin)
@@ -76,7 +80,7 @@ class MainWindow(object):
         menus_num = self.menus_layout.count()
         self.menu_size[0] = int((self.main_window.width() - self.menu_margin * (menus_num + 1)) / menus_num)
         self.menu_size[1] = self.menu_1.img_label.height()
-        # 维持各菜单宽度相等(使用网格布局会自动等宽等高)。
+        # 维持各菜单宽度相等。
         self.menu_1.setFixedWidth(self.menu_size[0])
         self.menu_2.setFixedWidth(self.menu_size[0])
         self.menu_3.setFixedWidth(self.menu_size[0])
@@ -87,14 +91,27 @@ class Menu(QtWidgets.QWidget):
     def __init__(self):
         super(Menu, self).__init__()
         self.margin = 1  # 下部组件的左右边距，用于实现点击阴影。
-        self.button_height = 30  # 下部高度。
+        self.height1 = 40  # 中部高度。
+        self.height2 = 30  # 下部高度。
         self.paint_flag = 0  # 鼠标按下或松开。
+
         # 上部组件。
         self.title_label = QtWidgets.QLabel()
+
         # 中上部组件。
         self.pixpath = r'assets\icons\title.png'
         self.pixmap = QtGui.QPixmap(self.pixpath)
         self.img_label = QtWidgets.QLabel()
+
+        # 中部拍照、录像控制。
+        self.mid_layout = None
+        self.img_button = ImgButton()
+        self.time_label = QtWidgets.QLabel()
+        self.video_button = VideoButton()
+
+        # 中下部分割线。
+        # separate_line
+
         # 下部组件。
         self.llight_lable = QtWidgets.QLabel()
         self.play_button = PlayButton()
@@ -103,12 +120,11 @@ class Menu(QtWidgets.QWidget):
         self.switch_button = SwitchButton('拍照', '录像')
         self.analyze_button = SwitchButton('采集', '分析')
         self.rlight_lable = QtWidgets.QLabel()
+
         # 创建菜单。
         self.create_parts()
         self.setToolTip('功能区')
         # 设置属性。
-        # size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        # self.setSizePolicy(size_policy)
         self.setStyleSheet('background-color:#5a5a5a')
 
     def create_parts(self):
@@ -116,14 +132,30 @@ class Menu(QtWidgets.QWidget):
         self.setContentsMargins(self.margin, self.margin, self.margin, self.margin)
 
         # 上部标题区。
-        self.title_label.setFixedHeight(int(self.button_height * 0.8))
+        self.title_label.setFixedHeight(int(self.height2 * 0.8))
         self.title_label.setContentsMargins(5, 0, 0, 0)
         self.title_label.setStyleSheet('background-color:#2A2A2A;color:white;font:bold 12px;')
 
         # 中上部图像区。
         self.img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        # self.img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignBottom)
         self.img_label.setScaledContents(False)
         self.img_label.setPixmap(self.pixmap)
+
+        # 中部拍照、录像控制。
+        background_color = 'background-color:rgba(0,0,0,60);'
+        lempty = QtWidgets.QWidget()
+        lempty.setStyleSheet(background_color)
+        lempty.setSizePolicy(size_policy)
+        self.img_button.setObjectName('拍照')
+        self.img_button.setFixedSize(self.height1, self.height1)
+        self.img_button.setStyleSheet(background_color)
+        self.video_button.setObjectName('录像')
+        self.video_button.setFixedSize(self.height1, self.height1)
+        self.video_button.setStyleSheet(background_color)
+        rempty = QtWidgets.QWidget()
+        rempty.setStyleSheet(background_color)
+        rempty.setSizePolicy(size_policy)
 
         # 中下部分割线。
         separate_line = QtWidgets.QWidget()
@@ -131,14 +163,14 @@ class Menu(QtWidgets.QWidget):
         separate_line.setStyleSheet('background-color:#2A2A2A')
 
         # 下部状态区。
-        light_size = QtCore.QSize(int(self.button_height * 0.8), int(self.button_height * 0.8))
+        light_size = QtCore.QSize(int(self.height2 * 0.8), int(self.height2 * 0.8))
         # 硬件连接状态指示灯。
         llight_lable_pixmap = QtGui.QPixmap(r'assets\icons\gray.png')
         llight_lable_pixmap = llight_lable_pixmap.scaled(light_size, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self.llight_lable.setPixmap(llight_lable_pixmap)
         self.llight_lable.setToolTip('硬件连接状态')
         # 播放停止按键。
-        self.play_button.setFixedSize(int(self.button_height * 0.85), int(self.button_height * 0.85))
+        self.play_button.setFixedSize(int(self.height2 * 0.85), int(self.height2 * 0.85))
         # 信息框。
         self.msg_lable.setStyleSheet('QLabel{font:14px;color:black;border:1px solid black};')
         # self.msg_lable.setStyleSheet('QToolTip{background-color:red;color:white;border:1px solid blue}')
@@ -147,7 +179,7 @@ class Menu(QtWidgets.QWidget):
         self.msg_lable.setToolTip('日志摘要')
         # 文件保持路径选择按键。
         self.folder_button.setStyleSheet("QPushButton{border-image:url('assets/icons/folder.png')};")
-        self.folder_button.setFixedSize(int(self.button_height * 0.65 * 1.5), int(self.button_height * 0.65))
+        self.folder_button.setFixedSize(int(self.height2 * 0.65 * 1.5), int(self.height2 * 0.65))
         self.folder_button.setToolTip('选择文件保存路径')
         # 拍照录像开关。
         self.switch_button.setToolTip('切换拍照与录像')
@@ -158,9 +190,19 @@ class Menu(QtWidgets.QWidget):
         rlight_lable_pixmap = rlight_lable_pixmap.scaled(light_size, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self.rlight_lable.setPixmap(rlight_lable_pixmap)
         self.rlight_lable.setToolTip('任务执行状态')
+
+        # 中部布局。
+        self.mid_layout = QtWidgets.QHBoxLayout(self.img_label)  # 完全和 self.img_label 重叠。
+        self.mid_layout.setSpacing(0)
+        self.mid_layout.addWidget(lempty)
+        self.mid_layout.addWidget(self.img_button)
+        self.mid_layout.addWidget(self.video_button)
+        self.mid_layout.addWidget(rempty)
+        self.video_button.hide()
+
         # 下部布局。
         bottom_widget = QtWidgets.QWidget()
-        bottom_widget.setFixedHeight(self.button_height)
+        bottom_widget.setFixedHeight(self.height2)
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(1, 1, 1, 1)  # 左上右下。
         bottom_layout.addWidget(self.llight_lable)
@@ -177,6 +219,7 @@ class Menu(QtWidgets.QWidget):
         layout.setSpacing(0)
         layout.addWidget(self.title_label)
         layout.addWidget(self.img_label)
+        # 中部拍照、录像控制区无需添加。
         layout.addWidget(separate_line)
         layout.addWidget(bottom_widget)
         self.setLayout(layout)
@@ -192,15 +235,17 @@ class Menu(QtWidgets.QWidget):
         else:
             self.pixmap = self.pixmap.scaledToHeight(self.img_label.height())
         self.img_label.setPixmap(self.pixmap)
+        # 始终保持在 self.img_label 底部。
+        self.mid_layout.setContentsMargins(0, self.img_label.height() - self.height1, 0, 0)
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if a0.y() > self.height() - self.button_height * 1.5:
+        if a0.y() > self.height() - self.height2 * 1.5:
             return
         self.paint_flag = 1
         self.repaint()
 
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if a0.y() > self.height() - self.button_height * 1.5:
+        if a0.y() > self.height() - self.height2 * 1.5:
             return
         self.paint_flag = 0
         self.repaint()
@@ -364,6 +409,183 @@ class PlayButton(QtWidgets.QPushButton):
         brush = QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern)
         brush.setColor(color)
         # 画正方形。
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        painter.drawPolygon(square)
+        painter.end()
+
+
+class ImgButton(QtWidgets.QLabel):
+    def __init__(self, parent=None):
+        super(ImgButton, self).__init__(parent)
+        self.circle1_width = 0.04  # 白色圆环 1 的线条宽度占 button 边长的比例。
+        self.space2_width = 0.08  # 白色圆环 1 与白色圆形 2 的间隙宽度占 button 边长的比例。
+        self.circle3_radius = 0.2  # 白色圆形3 的半径占 button 边长的比例。
+        self.setToolTip('点击拍照')
+        self.paint_flag = 0
+
+    def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
+        self.paint_flag = 1
+        self.repaint()
+
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
+        distance_x = abs(a0.x() - self.width() // 2)
+        distance_y = abs(a0.y() - self.height() // 2)
+        if distance_x > self.width() // 2 or distance_y > self.height() // 2:
+            return
+        self.paint_flag = 0
+        self.repaint()
+
+    def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
+        self.paint_circle()
+        inner_radius_x = 0
+        inner_radius_y = 0
+        if self.paint_flag == 0:
+            inner_radius_x = self.width() * (0.5 - self.circle1_width - self.space2_width)
+            inner_radius_y = self.height() * (0.5 - self.circle1_width - self.space2_width)
+        else:
+            inner_radius_x = self.width() * self.circle3_radius
+            inner_radius_y = self.height() * self.circle3_radius
+        self.paint_inter_circle(inner_radius_x, inner_radius_y)
+
+    def paint_circle(self):
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        # 1.1 白色圆环1。
+        radius1_x = center_x * (1 - self.circle1_width)
+        radius1_y = center_y * (1 - self.circle1_width)
+        circle1 = [QtCore.QPoint(center_x, center_y), radius1_x, radius1_y]
+        # 1.2 颜色。
+        color1 = QtGui.QColor('#ffffff')
+        pen = QtGui.QPen(color1, self.width() * self.circle1_width)
+        # 1.3 画白色圆环1。
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.drawEllipse(circle1[0], circle1[1], circle1[2])
+        painter.end()
+
+    def paint_inter_circle(self, radius_x, radius_y):
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        # 2.1 白色圆形2。
+        circle2 = [QtCore.QPoint(center_x, center_y), radius_x, radius_y]
+        # 2.2 颜色。
+        color2 = QtGui.QColor('#ffffff')
+        pen = QtGui.QPen(color2, 1)
+        brush = QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern)
+        brush.setColor(color2)
+        # 2.3 画白色圆形2。
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        painter.drawEllipse(circle2[0], circle2[1], circle2[2])
+        painter.end()
+
+
+class VideoButton(QtWidgets.QLabel):
+    def __init__(self, parent=None):
+        super(VideoButton, self).__init__(parent)
+        self.circle1_width = 0.04  # 白色圆环 1 的线条宽度占 button 边长的比例。
+        self.space2_width = 0.08  # 白色圆环 1 与白色圆形 2 的间隙宽度占 button 边长的比例。
+        self.circle3_radius = 0.2  # 白色圆形3 的半径占 button 边长的比例。
+        self.square4_len = self.circle3_radius
+        self.paint_flag = 0
+
+    def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
+        self.paint_flag = False if self.paint_flag else True
+
+    def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
+        self.paint_circle()
+        if self.paint_flag:
+            self.paint_stop()
+            self.setToolTip('点击停止录像')
+        else:
+            self.paint_play()
+            self.setToolTip('点击开始录像')
+
+    def paint_circle(self):
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        # 1.1 白色圆环1。
+        radius1_x = center_x * (1 - self.circle1_width)
+        radius1_y = center_y * (1 - self.circle1_width)
+        circle1 = [QtCore.QPoint(center_x, center_y), radius1_x, radius1_y]
+        # 1.2 颜色。
+        color1 = QtGui.QColor('#ffffff')
+        pen = QtGui.QPen(color1, self.width() * self.circle1_width)
+        # 1.3 画白色圆环1。
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.drawEllipse(circle1[0], circle1[1], circle1[2])
+        painter.end()
+
+    def paint_play(self):
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        # 2.1 白色圆形2。
+        radius2_x = self.width() * (0.5 - self.circle1_width - self.space2_width)
+        radius2_y = self.width() * (0.5 - self.circle1_width - self.space2_width)
+        circle2 = [QtCore.QPoint(center_x, center_y), radius2_x, radius2_y]
+        # 2.2 颜色。
+        color2 = QtGui.QColor('#ffffff')
+        pen = QtGui.QPen(color2, 1)
+        brush = QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern)
+        brush.setColor(color2)
+        # 2.3 画白色圆形2。
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        painter.drawEllipse(circle2[0], circle2[1], circle2[2])
+        painter.end()
+        # 3.1 红色圆形3。
+        radius3_x = self.width() * self.circle3_radius
+        radius3_y = self.width() * self.circle3_radius
+        circle3 = [QtCore.QPoint(center_x, center_y), radius3_x, radius3_y]
+        # 3.2 颜色。
+        color3 = QtGui.QColor('#ff0000')
+        pen = QtGui.QPen(color3, 1)
+        brush = QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern)
+        brush.setColor(color3)
+        # 3.3 画红色圆形3。
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        painter.drawEllipse(circle3[0], circle3[1], circle3[2])
+        painter.end()
+
+    def paint_stop(self):
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        # 4.1 红色正方形4。
+        point1_x = center_x - int(self.width() * self.square4_len)
+        point1_y = center_y - int(self.height() * self.square4_len)
+        point2_x = center_x + int(self.width() * self.square4_len)
+        point2_y = point1_y
+        point3_x = point2_x
+        point3_y = center_y + int(self.height() * self.square4_len)
+        point4_x = point1_x
+        point4_y = point3_y
+        square = QtGui.QPolygon([
+            QtCore.QPoint(point1_x, point1_y), QtCore.QPoint(point2_x, point2_y),
+            QtCore.QPoint(point3_x, point3_y), QtCore.QPoint(point4_x, point4_y)])
+        # 4.2 颜色。
+        color4 = QtGui.QColor(255, 0, 0)
+        pen = QtGui.QPen(color4, 1)
+        brush = QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern)
+        brush.setColor(color4)
+        # 4.3 画正方形4。
         painter = QtGui.QPainter()
         painter.begin(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)

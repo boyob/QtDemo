@@ -17,3 +17,14 @@ class Controller:
     def open_dir():
         import os
         os.system(r'explorer .')
+
+    def switch_camera(self, caller):
+        menus = [self.view.menu_1, self.view.menu_2, self.view.menu_3, self.view.menu_4]
+        img_button = menus[caller - 1].img_label.findChild(QtWidgets.QLabel, '拍照')
+        vid_button = menus[caller - 1].img_label.findChild(QtWidgets.QLabel, '录像')
+        if img_button.isHidden():
+            img_button.show()
+            vid_button.hide()
+        else:
+            img_button.hide()
+            vid_button.show()
